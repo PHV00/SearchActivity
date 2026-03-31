@@ -320,7 +320,7 @@ class SearchApp:
         self.root.geometry("1100x750")
 
         self.files_content = []
-        self.strategies = {
+        self.strategy = {
             "Naive": NaiveSearch(),
             "Rabin-Karp": RabinKarpSearch(),
             "KMP": KMPSearch(),
@@ -341,7 +341,7 @@ class SearchApp:
         self.pattern_entry.grid(row=0, column=2, padx=5, pady=5)
 
         tk.Label(top_frame, text="Algoritmo:").grid(row=0, column=3, padx=5, pady=5)
-        self.algorithm_combo = ttk.Combobox(top_frame, values=list(self.strategies.keys()), state="readonly", width=20)
+        self.algorithm_combo = ttk.Combobox(top_frame, values=list(self.strategy.keys()), state="readonly", width=20)
         self.algorithm_combo.grid(row=0, column=4, padx=5, pady=5)
         self.algorithm_combo.current(0)
 
@@ -381,7 +381,7 @@ class SearchApp:
 
     def get_selected_strategy(self):
         algorithm_name = self.algorithm_combo.get()
-        strategy = self.strategies[algorithm_name]
+        strategy = self.strategy[algorithm_name]
         self.context.set_strategy(strategy)
         return strategy
 
@@ -448,7 +448,7 @@ class SearchApp:
         for filename, text in self.files_content:
             self.output_text.insert(tk.END, f"\nComparação no arquivo: {filename}\n")
             self.output_text.insert(tk.END, "=" * 80 + "\n")
-            for strategy in self.strategies.values():
+            for strategy in self.strategy.values():
                 self.context.set_strategy(strategy)
                 result = self.context.execute_search(text, pattern, step_by_step=False)
                 self.print_result(filename, strategy, result, show_logs=False)

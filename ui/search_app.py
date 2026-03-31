@@ -1,10 +1,10 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-from strategies.naive_search import NaiveSearch
-from strategies.rabin_karp_search import RabinKarpSearch
-from strategies.kmp_search import KMPSearch
-from strategies.boyer_moore_search import BoyerMooreSearch
+from strategy.naive_search import NaiveSearch
+from strategy.rabin_karp_search import RabinKarpSearch
+from strategy.kmp_search import KMPSearch
+from strategy.boyer_moore_search import BoyerMooreSearch
 from context.search_context import SearchContext
 
 
@@ -15,7 +15,7 @@ class SearchApp:
         self.root.geometry("1100x750")
 
         self.files_content = []
-        self.strategies = {
+        self.strategy = {
             "Naive": NaiveSearch(),
             "Rabin-Karp": RabinKarpSearch(),
             "KMP": KMPSearch(),
@@ -38,7 +38,7 @@ class SearchApp:
         tk.Label(top_frame, text="Algoritmo:").grid(row=0, column=3, padx=5, pady=5)
         self.algorithm_combo = ttk.Combobox(
             top_frame,
-            values=list(self.strategies.keys()),
+            values=list(self.strategy.keys()),
             state="readonly",
             width=20
         )
@@ -81,7 +81,7 @@ class SearchApp:
 
     def get_selected_strategy(self):
         algorithm_name = self.algorithm_combo.get()
-        strategy = self.strategies[algorithm_name]
+        strategy = self.strategy[algorithm_name]
         self.context.set_strategy(strategy)
         return strategy
 
@@ -149,7 +149,7 @@ class SearchApp:
             self.output_text.insert(tk.END, f"\nComparação no arquivo: {filename}\n")
             self.output_text.insert(tk.END, "=" * 80 + "\n")
 
-            for strategy in self.strategies.values():
+            for strategy in self.strategy.values():
                 self.context.set_strategy(strategy)
                 result = self.context.execute_search(text, pattern, step_by_step=False)
                 self.print_result(filename, strategy, result, show_logs=False)

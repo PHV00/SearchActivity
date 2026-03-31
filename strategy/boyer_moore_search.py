@@ -1,47 +1,19 @@
 import time
-from strategies.search_strategy import SearchStrategy, SearchResult
+from strategy.search_strategy import SearchStrategy, SearchResult
 
 
-class KMPSearch(SearchStrategy):
+class BoyerMooreSearch(SearchStrategy):
     def name(self):
-        return "KMP"
+        return "Boyer-Moore"
 
     def complexity(self):
-        return "O(n + m)"
+        return "O(n / m) melhor caso"
 
-    def compute_lps(self, pattern, logs=None, step_by_step=False):
-        m = len(pattern)
-        lps = [0] * m
-        length = 0
-        i = 1
-
-        if step_by_step and logs is not None:
-            logs.append(f"Construindo LPS para o padrão '{pattern}'")
-
-        while i < m:
-            if pattern[i] == pattern[length]:
-                length += 1
-                lps[i] = length
-
-                if step_by_step and logs is not None:
-                    logs.append(f"LPS[{i}] = {length}")
-
-                i += 1
-            else:
-                if length != 0:
-                    length = lps[length - 1]
-
-                    if step_by_step and logs is not None:
-                        logs.append(f"Falha no LPS, recuando length para {length}")
-                else:
-                    lps[i] = 0
-
-                    if step_by_step and logs is not None:
-                        logs.append(f"LPS[{i}] = 0")
-
-                    i += 1
-
-        return lps
+    def build_bad_char_table(self, pattern):
+        table = {}
+        for i, char in enumerate(pattern):
+            table[char] = i
+        return table
 
     def search(self, text, pattern, step_by_step=False):
         n = len(text)
@@ -52,50 +24,55 @@ class KMPSearch(SearchStrategy):
 
         start = time.perf_counter_ns()
 
-        if m == 0:
+        if m == 0 or m > n:
             end = time.perf_counter_ns()
-            return SearchResult([], 0, end - start, ["Padrão vazio."], n, m, self.complexity())
+            return SearchResult([], 0, end - start, ["Padrão vazio ou maior que o texto."], n, m, self.complexity())
 
-        lps = self.compute_lps(pattern, logs, step_by_step)
+        bad_char = self.build_bad_char_table(pattern)
 
         if step_by_step:
-            logs.append(f"Tabela LPS final: {lps}")
+            logs.append(f"Tabela de saltos (bad character): {bad_char}")
 
-        i = 0
-        j = 0
+        s = 0
 
-        while i < n:
-            comparisons += 1
+        while s <= n - m:
+            j = m - 1
 
             if step_by_step:
-                logs.append(f"Comparando text[{i}]='{text[i]}' com pattern[{j}]='{pattern[j]}'")
+                logs.append(f"Alinhando padrão na posição {s}")
 
-            if text[i] == pattern[j]:
-                i += 1
-                j += 1
-
-            if j == m:
-                matches.append(i - j)
+            while j >= 0:
+                comparisons += 1
 
                 if step_by_step:
-                    logs.append(f"Ocorrência encontrada na posição {i - j}")
+                    logs.append(
+                        f"Comparando text[{s + j}]='{text[s + j]}' com pattern[{j}]='{pattern[j]}'"
+                    )
 
-                j = lps[j - 1]
+                if pattern[j] != text[s + j]:
+                    break
+
+                j -= 1
+
+            if j < 0:
+                matches.append(s)
 
                 if step_by_step:
-                    logs.append(f"Após match, j volta para {j} usando LPS")
+                    logs.append(f"Ocorrência encontrada na posição {s}")
 
-            elif i < n and text[i] != pattern[j]:
-                if j != 0:
-                    if step_by_step:
-                        logs.append(f"Falha. j vai de {j} para {lps[j - 1]} usando LPS")
+                s += (m - bad_char.get(text[s + m], -1)) if s + m < n else 1
 
-                    j = lps[j - 1]
-                else:
-                    if step_by_step:
-                        logs.append(f"Falha com j=0. Avançando i para {i + 1}")
+                if step_by_step:
+                    logs.append(f"Deslocando padrão para {s}")
+            else:
+                shift = max(1, j - bad_char.get(text[s + j], -1))
 
-                    i += 1
+                if step_by_step:
+                    logs.append(
+                        f"Mismatch com '{text[s + j]}'. Última ocorrência no padrão: {bad_char.get(text[s + j], -1)}. Deslocamento = {shift}"
+                    )
+
+                s += shift
 
         end = time.perf_counter_ns()
         return SearchResult(matches, comparisons, end - start, logs, n, m, self.complexity())

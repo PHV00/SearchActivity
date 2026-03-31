@@ -1,5 +1,5 @@
 import time
-from strategies.search_strategy import SearchStrategy, SearchResult
+from strategy.search_strategy import SearchStrategy, SearchResult
 
 
 class KMPSearch(SearchStrategy):
